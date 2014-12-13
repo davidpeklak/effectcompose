@@ -9,6 +9,13 @@ object KastenT {
     override def apply[A](fa: M[A]): M[A] = fa
   }
 
+  /**
+   * turns a transition F ~> M into a transition FreeC[F] ~> M
+   */
+  def freeCTrans[F[_], M[_]: Monad](t: (F ~> M)): (({type l[a] = FreeC[F, a]})#l ~> M) = new (({type l[a] = FreeC[F, a]})#l ~> M) {
+    def apply[A](fa: FreeC[F, A]): M[A] = Free.runFC(fa)(t)
+  }
+
   /////////////////////////
   // The State stuff as a MonadTransformer
   /////////////////////////
@@ -457,14 +464,10 @@ object KastenT {
       import effExceptionInterpretString._
 
       // run with KastenT.transformEffStateTaskSuperHengst.transformEffExceptionSuperHengst.daOption.run.apply(4).run
-      lazy val daOption = Free.runFC(daExceptionFree)(transToOption(new (FreeCTState ~> effStateInterpretInt.StateTS) {
-        def apply[A](fa: FreeCTState[A]): effStateInterpretInt.StateTS[A] = Free.runFC(fa)(effStateInterpretInt.transToState)
-      }))
+      lazy val daOption = Free.runFC(daExceptionFree)(transToOption(freeCTrans(effStateInterpretInt.transToState)))
 
       // run with KastenT.transformEffStateTaskSuperHengst.transformEffExceptionSuperHengst.daEither.run.apply(4).run
-      lazy val daEither = Free.runFC(daExceptionFree)(transToEither(new (FreeCTState ~> effStateInterpretInt.StateTS) {
-        def apply[A](fa: FreeCTState[A]): effStateInterpretInt.StateTS[A] = Free.runFC(fa)(effStateInterpretInt.transToState)
-      }))
+      lazy val daEither = Free.runFC(daExceptionFree)(transToEither(freeCTrans(effStateInterpretInt.transToState)))
     }
   }
 }
