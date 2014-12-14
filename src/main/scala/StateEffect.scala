@@ -1,23 +1,19 @@
 import scalaz._
 
-/**
- * @tparam S the type of the state variable
- */
-trait StateEffect[M[_], S] extends Effect[M] {
-
+object StateRepresentation {
   ///// Representation
 
   /**
    * Represents State operations that have the "effect" of operating on the S
+   * @tparam M the monad to stack the transformer on
+   * @tparam S the type of the state variable
    * @tparam A the result of an operation
    */
-  sealed trait EffState[A]
+  sealed trait EffState[M[_], S, A]
 
-  type F[A] = EffState[A]
+  case class Get[M[_], S]() extends EffState[M, S, S]
 
-  case object Get extends EffState[S]
-
-  case class Put(s: S) extends EffState[Unit]
+  case class Put[M[_], S](s: S) extends EffState[M, S, Unit]
 
   /**
    * Represents something else than a state operation, namely na operation of the underlying monad
@@ -25,31 +21,44 @@ trait StateEffect[M[_], S] extends Effect[M] {
    * @param ma the underlying monad operation
    * @tparam A the result of the operation
    */
-  case class OtherState[A](ma: M[A]) extends EffState[A]
+  case class OtherState[M[_], S, A](ma: M[A]) extends EffState[M, S, A]
+}
 
-  def fOther[A](ma: M[A]): F[A] = OtherState[A](ma)
+/**
+ * @tparam M the monad to stack the transformer on
+ * @tparam S the type of the state variable
+ */
+trait StateEffect[M[_], S] extends Effect[M] {
+
+  import StateRepresentation._
+
+  type F[A] = EffState[M, S, A]
 
   ///// Operations returning FreeCT
 
-  def fGet: FreeCT[S] = Free.liftFC(Get)
+  def fGet: FreeCT[S] = Free.liftFC[F, S](Get[M, S]())
 
-  def fPut(s: S): FreeCT[Unit] = Free.liftFC(Put(s))
+  def fPut(s: S): FreeCT[Unit] = Free.liftFC[F, Unit](Put[M, S](s))
+
+  def fOther[A](ma: M[A]): F[A] = OtherState[M, S, A](ma)
 }
 
 trait StateEffectInterpret[M[_], S] extends {
 
-  val stateEffect: StateEffect[M, S] // abstract
+  implicit def MM: Monad[M] // abstract
 
-  import stateEffect._
+  import StateRepresentation._
+
+  type F[A] = EffState[M, S, A]
 
   type StateTS[A] = StateT[M, S, A]
 
   val STH = StateT.StateMonadTrans[S]
   val STM = StateT.stateTMonadState[S, M]
 
-  val transToState: (EffState ~> StateTS) = new (EffState ~> StateTS) {
-    def apply[A](fa: EffState[A]): StateT[M, S, A] = fa match {
-      case Get => STM.get.asInstanceOf[StateT[M, S, A]]
+  val transToState: (F ~> StateTS) = new (F ~> StateTS) {
+    def apply[A](fa: F[A]): StateT[M, S, A] = fa match {
+      case g: Get[M, S] => STM.get.asInstanceOf[StateT[M, S, A]] // I can only check for the class here or the compile shouts at me
       case Put(s) => STM.put(s).asInstanceOf[StateT[M, S, A]]
       case OtherState(ma) => STH.liftM(ma)
     }

@@ -1,12 +1,14 @@
 import scalaz.{Free, Scalaz, Monad}
 import scalaz.Scalaz._
 
-class Usage {
+object Usage {
 
   object StateEffectId {
 
+    val MMId = implicitly[Monad[Id]] // I have to initialize that before using stateRun below
+
     val idStateEffect = new StateEffect[Id, Int] {
-      implicit def MM: Monad[Id] = implicitly[Monad[Id]]
+      implicit def MM: Monad[Id] = MMId
     }
 
     import idStateEffect._
@@ -20,10 +22,11 @@ class Usage {
     //// Interpretation
 
     val interpret = new StateEffectInterpret[Id, Int] {
-      val stateEffect = idStateEffect
+      implicit def MM: Monad[Id] = MMId
     }
 
-    val stateRun = Free.runFC[EffState, interpret.StateTS, Unit](stateProgram)(interpret.transToState)
+    // run with Usage.StateEffectId.stateRun(3)
+    lazy val stateRun = Free.runFC[StateEffect[Id, Int]#F, interpret.StateTS, Unit](stateProgram)(interpret.transToState)
 
   }
 
