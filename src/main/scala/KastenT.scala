@@ -435,7 +435,7 @@ object KastenT {
 
       import effExceptionFreeString.{lee, sRaise, sOtherException, FreeCTM, FreeCT => FreeCTException}
 
-      // i need an implicit convsersion directly from Id[A] to FreeCTException[A], so that I can also use Id[A] in the for loop
+      // i need an implicit conversion directly from Task[A] to FreeCTException[A], so that I can also use Task[A] in the for loop
       implicit def lse[A](ma: Task[A]): FreeCTException[A] = lee(sOtherState(ma))
 
       type X[A] = FreeCTException[A]
