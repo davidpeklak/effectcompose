@@ -1,5 +1,6 @@
 import scalaz.{Free, Scalaz, Monad}
 import scalaz.Scalaz._
+import scalaz.concurrent.Task
 
 object Usage {
 
@@ -34,11 +35,11 @@ object Usage {
 
     val MMList = implicitly[Monad[List]] // I have to initialize that before using stateRun below
 
-    val idStateEffect = new StateEffect[List, Int] {
+    val ListStateEffect = new StateEffect[List, Int] {
       implicit def MM: Monad[List] = MMList
     }
 
-    import idStateEffect._
+    import ListStateEffect._
 
     val stateProgram: FreeCT[Unit] =
       for {
@@ -55,6 +56,34 @@ object Usage {
 
     // run with Usage.StateEffectList.stateRun(3)
     lazy val stateRun = Free.runFC[StateEffect[List, Int]#F, interpret.StateTS, Unit](stateProgram)(interpret.transToState)
+  }
+
+  object StateEffectTask {
+
+    val MMTask = implicitly[Monad[Task]] // I have to initialize that before using stateRun below
+
+    val taskStateEffect = new StateEffect[Task, Int] {
+      implicit def MM: Monad[Task] = MMTask
+    }
+
+    import taskStateEffect._
+
+    val stateProgram: FreeCT[Unit] =
+      for {
+        _ <- Task(println("Enter a number:")): FreeCT[Unit]
+        i <- Task(readLine).map(_.toInt) : FreeCT[Int]
+        j <- fGet
+        _ <- fPut(i * j)
+      } yield ()
+
+    //// Interpretation
+
+    val interpret = new StateEffectInterpret[Task, Int] {
+      implicit def MM: Monad[Task] = MMTask
+    }
+
+    // run with Usage.StateEffectTask.stateRun(3).run
+    lazy val stateRun = Free.runFC[StateEffect[Task, Int]#F, interpret.StateTS, Unit](stateProgram)(interpret.transToState)
   }
 
 }
