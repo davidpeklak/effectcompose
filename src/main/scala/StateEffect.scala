@@ -1,10 +1,8 @@
 import scalaz._
 
 object StateRepresentation {
-  ///// Representation
-
   /**
-   * Represents State operations that have the "effect" of operating on the S
+   * Represents state operations that have the "effect" of operating on the S
    * @tparam M the monad to stack the transformer on
    * @tparam S the type of the state variable
    * @tparam A the result of an operation
@@ -16,7 +14,7 @@ object StateRepresentation {
   case class Put[M[_], S](s: S) extends EffState[M, S, Unit]
 
   /**
-   * Represents something else than a state operation, namely na operation of the underlying monad
+   * Represents something else than a state operation, namely an operation of the underlying monad
    * (i.e. the monad that we are going to stack the StateT onto)
    * @param ma the underlying monad operation
    * @tparam A the result of the operation

@@ -86,4 +86,33 @@ object Usage {
     lazy val stateRun = Free.runFC[StateEffect[Task, Int]#F, interpret.StateTS, Unit](stateProgram)(interpret.transToState)
   }
 
+  object ExceptionEffectId {
+    val MMId = implicitly[Monad[Id]] // I have to initialize that before using stateRun below
+
+    val idExceptionEffect = new ExceptionEffect[Id, String] {
+      implicit def MM: Monad[Id] = MMId
+    }
+
+    import idExceptionEffect._
+
+    val exceptionProgram: FreeCT[Unit] =
+      for {
+        i <- 3 : FreeCT [Int]
+        _ <- fRaise[Unit]("Error!")
+      } yield i
+
+    //// Interpretation
+
+    val interpret = new ExceptionEffectInterpret[Id, String] {
+      implicit def MM: Monad[Id] = MMId
+    }
+
+    // run with Usage.ExceptionEffectId.optionRun
+    lazy val optionRun = Free.runFC[ExceptionEffect[Id, String]#F, interpret.OptionTE, Unit](exceptionProgram)(interpret.transToOption)
+
+    // run with Usage.ExceptionEffectId.eitherRun
+    lazy val eitherRun = Free.runFC[ExceptionEffect[Id, String]#F, interpret.EitherTE, Unit](exceptionProgram)(interpret.transToEither)
+
+  }
+
 }
