@@ -1,5 +1,5 @@
 import scalaz.concurrent.Task
-import scalaz.{Free, Monad}
+import scalaz.{~>, Free, Monad}
 
 object UsageWithTask {
   object StateEffectTask {
@@ -47,8 +47,10 @@ object UsageWithTask {
 
     //// Interpretation
 
-    val interpret = new ExceptionEffectInterpret[Task, String] {
-      implicit def MM: Monad[Task] = MMTask
+    val interpret = new ExceptionEffectInterpret[Task, Task, String] {
+      implicit def RM: Monad[Task] = MMTask
+
+      def MtoR: Task ~> Task = EffectCompose.identTrans
     }
 
     // run with UsageWithTask.ExceptionEffectTask.optionRun.run.run

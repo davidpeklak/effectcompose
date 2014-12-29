@@ -36,35 +36,35 @@ trait ExceptionEffect[M[_], E] extends Effect[M] {
   def fOther[A](ma: M[A]): F[A] = OtherException[M, E, A](ma)
 }
 
-trait ExceptionEffectInterpret[M[_], E] extends {
+trait ExceptionEffectInterpret[M[_], R[_], E] extends {
 
-  implicit def MM: Monad[M] // abstract
+  implicit def RM: Monad[R] // abstract
+
+  def MtoR: M ~> R
 
   import ExceptionRepresentation._
 
   type F[A] = EffException[M, E, A]
 
-  type OptionTE[A] = OptionT[M, A]
+  type OptionTE[A] = OptionT[R, A]
 
   val OTH = OptionT.optionTMonadTrans
-  val OTM = OptionT.optionTMonadPlus[M]
 
-  val transToOption: (F ~> OptionTE) = new (F ~> OptionTE) {
-    def apply[A](fa: F[A]): OptionT[M, A] = fa match {
-      case Raise(_) => OptionT.none[M, A]
-      case OtherException(ma) => OTH.liftM(ma)
+  def transToOption: (F ~> OptionTE) = new (F ~> OptionTE) {
+    override def apply[A](fa: F[A]): OptionTE[A] = fa match {
+      case Raise(e) => OptionT.none[R, A]
+      case OtherException(ma) => OTH.liftM(MtoR(ma))
     }
   }
 
-  type EitherTE[A] = EitherT[M, E, A]
+  type EitherTE[A] = EitherT[R, E, A]
 
   val ETH = EitherT.eitherTHoist[E]
-  val ETM = EitherT.eitherTMonad[M, E]
 
   val transToEither: (F ~> EitherTE) = new (F ~> EitherTE) {
-    def apply[A](fa: F[A]): EitherT[M, E, A] = fa match {
-      case Raise(e) => EitherT.left[M, E, A](MM.point(e))
-      case OtherException(ma) => ETH.liftM(ma)
+    def apply[A](fa: F[A]): EitherT[R, E, A] = fa match {
+      case Raise(e) => EitherT.left[R, E, A](RM.point(e))
+      case OtherException(ma) => ETH.liftM(MtoR(ma))
     }
   }
 }

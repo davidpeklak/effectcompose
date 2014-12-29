@@ -1,4 +1,4 @@
-import scalaz.{Free, Scalaz, Monad}
+import scalaz.{~>, Free, Scalaz, Monad}
 import scalaz.Scalaz._
 
 object UsageWithId {
@@ -47,8 +47,10 @@ object UsageWithId {
 
     //// Interpretation
 
-    val interpret = new ExceptionEffectInterpret[Id, String] {
-      implicit def MM: Monad[Id] = MMId
+    val interpret = new ExceptionEffectInterpret[Id, Id, String] {
+      implicit def RM: Monad[Id] = MMId
+
+      def MtoR: Id ~> Id = EffectCompose.identTrans
     }
 
     // run with UsageWithId.ExceptionEffectId.optionRun

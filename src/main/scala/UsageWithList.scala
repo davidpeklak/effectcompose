@@ -1,5 +1,5 @@
 import scalaz.Scalaz._
-import scalaz.{Free, Monad}
+import scalaz.{~>, Free, Monad}
 
 object UsageWithList {
   object StateEffectList {
@@ -46,8 +46,10 @@ object UsageWithList {
 
     //// Interpretation
 
-    val interpret = new ExceptionEffectInterpret[List, String] {
-      implicit def MM: Monad[List] = MMList
+    val interpret = new ExceptionEffectInterpret[List, List, String] {
+      implicit def RM: Monad[List] = MMList
+
+      def MtoR: List ~> List = EffectCompose.identTrans
     }
 
     // run with UsageWithList.ExceptionEffectList.optionRun
