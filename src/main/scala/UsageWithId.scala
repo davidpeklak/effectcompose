@@ -15,7 +15,7 @@ object UsageWithId {
 
     val stateProgram: FreeCT[Unit] =
       for {
-        i <- 3 : FreeCT [Int]
+        i <- 3: FreeCT[Int]
         j <- fGet
         _ <- fPut(i * j)
       } yield ()
@@ -41,7 +41,7 @@ object UsageWithId {
 
     val exceptionProgram: FreeCT[Int] =
       for {
-        i <- 3 : FreeCT [Int]
+        i <- 3: FreeCT[Int]
         _ <- fRaise[Unit]("Error!")
       } yield i
 
@@ -58,6 +58,47 @@ object UsageWithId {
 
     // run with UsageWithId.ExceptionEffectId.eitherRun
     lazy val eitherRun = Free.runFC[ExceptionEffect[Id, String]#F, interpret.EitherTE, Int](exceptionProgram)(interpret.transToEither)
+  }
+
+  object ExceptionOnStateEffectId {
+    val MMId = implicitly[Monad[Id]]
+
+    val idStateEffect = new StateEffect[Id, Int] {
+      implicit def MM: Monad[Id] = MMId
+    }
+
+    val idExceptionEffect = new ExceptionEffect[idStateEffect.FreeCT, String] {
+      implicit def MM: Monad[idStateEffect.FreeCT] = idStateEffect.FreeCTM
+    }
+
+    import idStateEffect.{fGet, fPut}
+    import idExceptionEffect._
+
+    implicit def liftMTwice[A](a: A): FreeCT[A] = idExceptionEffect.liftM(idStateEffect.liftM(a))
+
+    val stateExceptionProgram: FreeCT[Int] =
+      for {
+        i <- 3: FreeCT[Int]
+        j <- fGet: FreeCT[Int]
+        k <- if (i > j) i: FreeCT[Int] else fRaise("Too low!")
+      }
+      yield k
+
+    //// Interpretation
+
+    val interpretState = new StateEffectInterpret[Id, Int] {
+      override implicit def MM: Monad[Id] = MMId
+    }
+
+    val interpretException = new ExceptionEffectInterpret[idStateEffect.FreeCT, interpretState.StateTS, String] {
+      implicit def RM: Monad[interpretState.StateTS] = interpretState.STM
+
+      def MtoR: idStateEffect.FreeCT ~> interpretState.StateTS = EffectCompose.freeCTrans(interpretState.transToState)
+    }
+
+    // run with UsageWithId.ExceptionOnStateEffectId.optionRun.run.run(3)
+    lazy val optionRun = Free.runFC[ExceptionEffect[idStateEffect.FreeCT, String]#F, interpretException.OptionTE, Int](stateExceptionProgram)(interpretException.transToOption)
+
   }
 
 }

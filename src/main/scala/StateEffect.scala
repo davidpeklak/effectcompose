@@ -56,7 +56,7 @@ trait StateEffectInterpret[M[_], S] extends {
 
   val transToState: (F ~> StateTS) = new (F ~> StateTS) {
     def apply[A](fa: F[A]): StateT[M, S, A] = fa match {
-      case g: Get[M, S] => STM.get.asInstanceOf[StateT[M, S, A]] // I can only check for the class here or the compile shouts at me
+      case g: Get[M, S] => STM.get.asInstanceOf[StateT[M, S, A]] // I can only check for the class here or the compiler shouts at me
       case Put(s) => STM.put(s).asInstanceOf[StateT[M, S, A]]
       case OtherState(ma) => STH.liftM(ma)
     }
