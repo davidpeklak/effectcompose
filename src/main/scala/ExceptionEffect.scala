@@ -40,7 +40,7 @@ trait ExceptionEffectInterpret[M[_], R[_], E] extends {
 
   implicit def RM: Monad[R] // abstract
 
-  def MtoR: M ~> R
+  def MtoR: M ~> R // abstract, should have default implementation for M == R
 
   import ExceptionRepresentation._
 
@@ -49,6 +49,7 @@ trait ExceptionEffectInterpret[M[_], R[_], E] extends {
   type OptionTE[A] = OptionT[R, A]
 
   val OTH = OptionT.optionTMonadTrans
+  val OTM = OptionT.optionTMonadPlus[R]
 
   def transToOption: (F ~> OptionTE) = new (F ~> OptionTE) {
     override def apply[A](fa: F[A]): OptionTE[A] = fa match {

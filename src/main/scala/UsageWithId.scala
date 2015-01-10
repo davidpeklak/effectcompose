@@ -22,8 +22,10 @@ object UsageWithId {
 
     //// Interpretation
 
-    val interpret = new StateEffectInterpret[Id, Int] {
-      implicit def MM: Monad[Id] = MMId
+    val interpret = new StateEffectInterpret[Id, Id, Int] {
+      implicit def RM: Monad[Id] = MMId
+
+      override def MtoR: Id ~> Id = EffectCompose.identTrans[Id]
     }
 
     // run with UsageWithId.StateEffectId.stateRun(3)
@@ -80,14 +82,16 @@ object UsageWithId {
       for {
         i <- 3: FreeCT[Int]
         j <- fGet: FreeCT[Int]
-        k <- if (i > j) i: FreeCT[Int] else fRaise("Too low!")
+        k <- if (i > j) i: FreeCT[Int] else fRaise("Too low!"): FreeCT[Int]
       }
       yield k
 
     //// Interpretation
 
-    val interpretState = new StateEffectInterpret[Id, Int] {
-      override implicit def MM: Monad[Id] = MMId
+    val interpretState = new StateEffectInterpret[Id, Id, Int] {
+      override implicit def RM: Monad[Id] = MMId
+
+      override def MtoR: Id ~> Id = EffectCompose.identTrans
     }
 
     val interpretException = new ExceptionEffectInterpret[idStateEffect.FreeCT, interpretState.StateTS, String] {
@@ -98,7 +102,48 @@ object UsageWithId {
 
     // run with UsageWithId.ExceptionOnStateEffectId.optionRun.run.run(3)
     lazy val optionRun = Free.runFC[ExceptionEffect[idStateEffect.FreeCT, String]#F, interpretException.OptionTE, Int](stateExceptionProgram)(interpretException.transToOption)
-
   }
 
+  object StateOnExceptionEffectId {
+    val MMId = implicitly[Monad[Id]]
+
+    val idExceptionEffect = new ExceptionEffect[Id, String] {
+      implicit def MM: Monad[Id] = MMId
+    }
+
+    val idStateEffect = new StateEffect[idExceptionEffect.FreeCT, Int] {
+      implicit def MM: Monad[idExceptionEffect.FreeCT] = idExceptionEffect.FreeCTM
+    }
+
+    import idExceptionEffect.fRaise
+    import idStateEffect._
+
+    implicit def liftMTwice[A](a: A): FreeCT[A] = idStateEffect.liftM(idExceptionEffect.liftM(a))
+
+    val exceptionStateProgram: FreeCT[Int] =
+      for {
+        i <- 3: FreeCT[Int]
+        j <- fGet: FreeCT[Int]
+        k <- if (i > j) i: FreeCT[Int] else fRaise[Int]("Too low!"): FreeCT[Int]
+      }
+      yield k
+
+    //// Interpretation
+
+    val interpretException = new ExceptionEffectInterpret[Id, Id, String] {
+      implicit def RM: Monad[Id] = MMId
+
+      def MtoR: Id ~> Id = EffectCompose.identTrans
+    }
+
+    val interpretState = new StateEffectInterpret[idExceptionEffect.FreeCT, interpretException.OptionTE, Int] {
+      override implicit def RM: Monad[interpretException.OptionTE] = interpretException.OTM
+
+      override def MtoR: idExceptionEffect.FreeCT ~> interpretException.OptionTE = EffectCompose.freeCTrans(interpretException.transToOption)
+    }
+
+    // run with UsageWithId.StateOnExceptionEffectId.stateRun.run(2).run
+    lazy val stateRun =  Free.runFC[StateEffect[idExceptionEffect.FreeCT, Int]#F, interpretState.StateTS, Int](exceptionStateProgram)(interpretState.transToState)
+
+  }
 }

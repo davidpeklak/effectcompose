@@ -21,8 +21,10 @@ object UsageWithList {
 
     //// Interpretation
 
-    val interpret = new StateEffectInterpret[List, Int] {
-      implicit def MM: Monad[List] = MMList
+    val interpret = new StateEffectInterpret[List, List, Int] {
+      implicit def RM: Monad[List] = MMList
+
+      override def MtoR: List ~> List = EffectCompose.identTrans
     }
 
     // run with UsageWithList.StateEffectList.stateRun(3)

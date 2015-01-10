@@ -41,24 +41,26 @@ trait StateEffect[M[_], S] extends Effect[M] {
   def fOther[A](ma: M[A]): F[A] = OtherState[M, S, A](ma)
 }
 
-trait StateEffectInterpret[M[_], S] extends {
+trait StateEffectInterpret[M[_], R[_], S] extends {
 
-  implicit def MM: Monad[M] // abstract
+  implicit def RM: Monad[R] // abstract
+
+  def MtoR: M ~> R // abstract, should have default implementation for M == R
 
   import StateRepresentation._
 
   type F[A] = EffState[M, S, A]
 
-  type StateTS[A] = StateT[M, S, A]
+  type StateTS[A] = StateT[R, S, A]
 
   val STH = StateT.StateMonadTrans[S]
-  val STM = StateT.stateTMonadState[S, M]
+  val STM = StateT.stateTMonadState[S, R]
 
   val transToState: (F ~> StateTS) = new (F ~> StateTS) {
-    def apply[A](fa: F[A]): StateT[M, S, A] = fa match {
-      case g: Get[M, S] => STM.get.asInstanceOf[StateT[M, S, A]] // I can only check for the class here or the compiler shouts at me
-      case Put(s) => STM.put(s).asInstanceOf[StateT[M, S, A]]
-      case OtherState(ma) => STH.liftM(ma)
+    def apply[A](fa: F[A]): StateT[R, S, A] = fa match {
+      case g: Get[M, S] => STM.get.asInstanceOf[StateT[R, S, A]] // I can only check for the class here or the compiler shouts at me
+      case Put(s) => STM.put(s).asInstanceOf[StateT[R, S, A]]
+      case OtherState(ma) => STH.liftM(MtoR(ma))
     }
   }
 }
