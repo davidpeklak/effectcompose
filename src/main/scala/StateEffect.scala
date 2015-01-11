@@ -41,6 +41,12 @@ trait StateEffect[M[_], S] extends Effect[M] {
   def fOther[A](ma: M[A]): F[A] = OtherState[M, S, A](ma)
 }
 
+object StateEffect {
+  def apply[M[_], S](mm: Monad[M]): StateEffect[M, S] = new StateEffect[M, S] {
+    implicit def MM: Monad[M] = mm
+  }
+}
+
 trait StateEffectInterpret[M[_], R[_], S] extends {
 
   implicit def RM: Monad[R] // abstract

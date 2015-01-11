@@ -6,9 +6,7 @@ object UsageWithTask {
 
     val MMTask = implicitly[Monad[Task]] // I have to initialize that before using stateRun below
 
-    val taskStateEffect = new StateEffect[Task, Int] {
-      implicit def MM: Monad[Task] = MMTask
-    }
+    val taskStateEffect = StateEffect[Task, Int](MMTask)
 
     import taskStateEffect._
 

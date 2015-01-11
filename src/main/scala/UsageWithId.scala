@@ -7,9 +7,7 @@ object UsageWithId {
 
     val MMId = implicitly[Monad[Id]] // I have to initialize that before using stateRun below
 
-    val idStateEffect = new StateEffect[Id, Int] {
-      implicit def MM: Monad[Id] = MMId
-    }
+    val idStateEffect = StateEffect[Id, Int](MMId)
 
     import idStateEffect._
 
@@ -65,9 +63,7 @@ object UsageWithId {
   object ExceptionOnStateEffectId {
     val MMId = implicitly[Monad[Id]]
 
-    val idStateEffect = new StateEffect[Id, Int] {
-      implicit def MM: Monad[Id] = MMId
-    }
+    val idStateEffect = StateEffect[Id, Int](MMId)
 
     val idExceptionEffect = new ExceptionEffect[idStateEffect.FreeCT, String] {
       implicit def MM: Monad[idStateEffect.FreeCT] = idStateEffect.FreeCTM
@@ -111,9 +107,7 @@ object UsageWithId {
       implicit def MM: Monad[Id] = MMId
     }
 
-    val idStateEffect = new StateEffect[idExceptionEffect.FreeCT, Int] {
-      implicit def MM: Monad[idExceptionEffect.FreeCT] = idExceptionEffect.FreeCTM
-    }
+    val idStateEffect = StateEffect[idExceptionEffect.FreeCT, Int](idExceptionEffect.FreeCTM)
 
     import idExceptionEffect.fRaise
     import idStateEffect._

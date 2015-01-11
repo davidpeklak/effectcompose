@@ -6,9 +6,7 @@ object UsageWithList {
 
     val MMList = implicitly[Monad[List]] // I have to initialize that before using stateRun below
 
-    val listStateEffect = new StateEffect[List, Int] {
-      implicit def MM: Monad[List] = MMList
-    }
+    val listStateEffect = StateEffect[List, Int](MMList)
 
     import listStateEffect._
 
