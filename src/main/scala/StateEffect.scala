@@ -71,3 +71,17 @@ trait StateEffectInterpret[M[_], R[_], S] extends {
   }
 }
 
+object StateEffectInterpret {
+  def apply[M[_], S](mm: Monad[M]): StateEffectInterpret[M, M, S] = new StateEffectInterpret[M, M, S] {
+    implicit def RM: Monad[M] = mm
+
+    def MtoR: M ~> M = EffectCompose.identTrans
+  }
+
+  def apply[M[_], R[_], S](rm: Monad[R], mtor: M ~> R): StateEffectInterpret[M, R, S] = new StateEffectInterpret[M, R, S] {
+    implicit def RM: Monad[R] = rm
+
+    def MtoR: M ~> R = mtor
+  }
+}
+

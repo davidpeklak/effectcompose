@@ -20,11 +20,7 @@ object UsageWithTask {
 
     //// Interpretation
 
-    val interpret = new StateEffectInterpret[Task, Task, Int] {
-      implicit def RM: Monad[Task] = MMTask
-
-      override def MtoR: Task ~> Task = EffectCompose.identTrans
-    }
+    val interpret = StateEffectInterpret[Task, Int](MMTask)
 
     // run with UsageWithTask.StateEffectTask.stateRun(3).run
     lazy val stateRun = Free.runFC[StateEffect[Task, Int]#F, interpret.StateTS, Unit](stateProgram)(interpret.transToState)

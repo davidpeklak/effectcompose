@@ -19,11 +19,7 @@ object UsageWithList {
 
     //// Interpretation
 
-    val interpret = new StateEffectInterpret[List, List, Int] {
-      implicit def RM: Monad[List] = MMList
-
-      override def MtoR: List ~> List = EffectCompose.identTrans
-    }
+    val interpret = StateEffectInterpret[List, Int](MMList)
 
     // run with UsageWithList.StateEffectList.stateRun(3)
     lazy val stateRun = Free.runFC[StateEffect[List, Int]#F, interpret.StateTS, Unit](stateProgram)(interpret.transToState)

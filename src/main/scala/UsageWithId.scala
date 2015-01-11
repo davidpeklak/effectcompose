@@ -20,11 +20,7 @@ object UsageWithId {
 
     //// Interpretation
 
-    val interpret = new StateEffectInterpret[Id, Id, Int] {
-      implicit def RM: Monad[Id] = MMId
-
-      override def MtoR: Id ~> Id = EffectCompose.identTrans[Id]
-    }
+    val interpret = StateEffectInterpret[Id, Int](MMId)
 
     // run with UsageWithId.StateEffectId.stateRun(3)
     lazy val stateRun = Free.runFC[StateEffect[Id, Int]#F, interpret.StateTS, Unit](stateProgram)(interpret.transToState)
@@ -80,11 +76,7 @@ object UsageWithId {
 
     //// Interpretation
 
-    val interpretState = new StateEffectInterpret[Id, Id, Int] {
-      override implicit def RM: Monad[Id] = MMId
-
-      override def MtoR: Id ~> Id = EffectCompose.identTrans
-    }
+    val interpretState = StateEffectInterpret[Id, Int](MMId)
 
     val interpretException = new ExceptionEffectInterpret[idStateEffect.FreeCT, interpretState.StateTS, String] {
       implicit def RM: Monad[interpretState.StateTS] = interpretState.STM
@@ -124,11 +116,7 @@ object UsageWithId {
       def MtoR: Id ~> Id = EffectCompose.identTrans
     }
 
-    val interpretState = new StateEffectInterpret[idExceptionEffect.FreeCT, interpretException.OptionTE, Int] {
-      override implicit def RM: Monad[interpretException.OptionTE] = interpretException.OTM
-
-      override def MtoR: idExceptionEffect.FreeCT ~> interpretException.OptionTE = EffectCompose.freeCTrans(interpretException.transToOption)
-    }
+    val interpretState = StateEffectInterpret[idExceptionEffect.FreeCT, interpretException.OptionTE, Int](interpretException.OTM, EffectCompose.freeCTrans(interpretException.transToOption))
 
     // run with UsageWithId.StateOnExceptionEffectId.stateRun.run(2).run
     lazy val stateRun =  Free.runFC[StateEffect[idExceptionEffect.FreeCT, Int]#F, interpretState.StateTS, Int](exceptionStateProgram)(interpretState.transToState)
