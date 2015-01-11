@@ -32,9 +32,7 @@ object UsageWithList {
   object ExceptionEffectList {
     val MMList = implicitly[Monad[List]]
 
-    val listExceptionEffect = new ExceptionEffect[List, String] {
-      implicit def MM: Monad[List] = MMList
-    }
+    val listExceptionEffect = ExceptionEffect[List, String](MMList)
 
     import listExceptionEffect._
 

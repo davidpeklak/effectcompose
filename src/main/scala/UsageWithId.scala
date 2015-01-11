@@ -33,9 +33,7 @@ object UsageWithId {
   object ExceptionEffectId {
     val MMId = implicitly[Monad[Id]]
 
-    val idExceptionEffect = new ExceptionEffect[Id, String] {
-      implicit def MM: Monad[Id] = MMId
-    }
+    val idExceptionEffect = ExceptionEffect[Id, String](MMId)
 
     import idExceptionEffect._
 
@@ -65,9 +63,7 @@ object UsageWithId {
 
     val idStateEffect = StateEffect[Id, Int](MMId)
 
-    val idExceptionEffect = new ExceptionEffect[idStateEffect.FreeCT, String] {
-      implicit def MM: Monad[idStateEffect.FreeCT] = idStateEffect.FreeCTM
-    }
+    val idExceptionEffect = ExceptionEffect[idStateEffect.FreeCT, String](idStateEffect.FreeCTM)
 
     import idStateEffect.{fGet, fPut}
     import idExceptionEffect._
@@ -103,9 +99,7 @@ object UsageWithId {
   object StateOnExceptionEffectId {
     val MMId = implicitly[Monad[Id]]
 
-    val idExceptionEffect = new ExceptionEffect[Id, String] {
-      implicit def MM: Monad[Id] = MMId
-    }
+    val idExceptionEffect = ExceptionEffect[Id, String](MMId)
 
     val idStateEffect = StateEffect[idExceptionEffect.FreeCT, Int](idExceptionEffect.FreeCTM)
 

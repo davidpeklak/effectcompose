@@ -33,9 +33,7 @@ object UsageWithTask {
   object ExceptionEffectTask {
     val MMTask = implicitly[Monad[Task]]
 
-    val taskExceptionEffect = new ExceptionEffect[Task, String] {
-      implicit def MM: Monad[Task] = MMTask
-    }
+    val taskExceptionEffect = ExceptionEffect[Task, String](MMTask)
 
     import taskExceptionEffect._
 

@@ -36,6 +36,12 @@ trait ExceptionEffect[M[_], E] extends Effect[M] {
   def fOther[A](ma: M[A]): F[A] = OtherException[M, E, A](ma)
 }
 
+object ExceptionEffect {
+  def apply[M[_], E](mm: Monad[M]): ExceptionEffect[M, E] = new ExceptionEffect[M, E] {
+    implicit def MM: Monad[M] = mm
+  }
+}
+
 trait ExceptionEffectInterpret[M[_], R[_], E] extends {
 
   implicit def RM: Monad[R] // abstract
