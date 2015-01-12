@@ -75,3 +75,17 @@ trait ExceptionEffectInterpret[M[_], R[_], E] extends {
     }
   }
 }
+
+object ExceptionEffectInterpret {
+  def apply[M[_], E](mm : Monad[M]): ExceptionEffectInterpret[M, M, E] = new ExceptionEffectInterpret[M, M, E] {
+    def MtoR: M ~> M = EffectCompose.identTrans
+
+    implicit def RM: Monad[M] = mm
+  }
+
+  def apply[M[_], R[_], E](rm : Monad[R], mtor: M ~> R): ExceptionEffectInterpret[M, R, E] = new ExceptionEffectInterpret[M, R, E] {
+    implicit def RM: Monad[R] = rm
+
+    def MtoR: M ~> R = mtor
+  }
+}

@@ -41,11 +41,7 @@ object UsageWithTask {
 
     //// Interpretation
 
-    val interpret = new ExceptionEffectInterpret[Task, Task, String] {
-      implicit def RM: Monad[Task] = MMTask
-
-      def MtoR: Task ~> Task = EffectCompose.identTrans
-    }
+    val interpret = ExceptionEffectInterpret[Task, String](MMTask)
 
     // run with UsageWithTask.ExceptionEffectTask.optionRun.run.run
     lazy val optionRun = Free.runFC[ExceptionEffect[Task, String]#F, interpret.OptionTE, Int](exceptionProgram)(interpret.transToOption)

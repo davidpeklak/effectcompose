@@ -40,11 +40,7 @@ object UsageWithList {
 
     //// Interpretation
 
-    val interpret = new ExceptionEffectInterpret[List, List, String] {
-      implicit def RM: Monad[List] = MMList
-
-      def MtoR: List ~> List = EffectCompose.identTrans
-    }
+    val interpret = ExceptionEffectInterpret[List, String](MMList)
 
     // run with UsageWithList.ExceptionEffectList.optionRun
     lazy val optionRun = Free.runFC[ExceptionEffect[List, String]#F, interpret.OptionTE, Int](exceptionProgram)(interpret.transToOption)
